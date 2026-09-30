@@ -1,0 +1,3 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap');
+:root{font-family:'Barlow',sans-serif;color:#f0f4ff;background:#0a1628;font-synthesis:none;text-rendering:optimizeLegibility;font-smooth:always;font-weight:400;--verde:#00c97a;--azul:#0a1628;--azul2:#112244;--branco:#f0f4ff;--cinza:#8899bb}
+*{box-sizing:border-box}html,body,#root{min-height:100%;margin:0}body{min-width:320px}button,input,select{font:inherit}a{color:inherit}.atleta-topbar-acoes{display:flex;align-items:center;gap:1rem}@media(max-width:520px){.atleta-topbar-acoes{gap:.55rem}}
