@@ -1,0 +1,100 @@
+services:
+
+  mysql:
+    image: mysql:8.4
+    container_name: laivy-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME:-sistema_esportivo}
+      # Usuário da aplicação (só no banco do sistema). Vazio = não cria.
+      # Em volume já existente o MySQL ignora estas duas: use scripts/rotacionar-segredos.py.
+      - MYSQL_USER=${DB_APP_USER:-}
+      - MYSQL_PASSWORD=${DB_APP_PASSWORD:-}
+    ports:
+      # 3307 no host pra não brigar com um MySQL local já rodando na 3306.
+      # 127.0.0.1: só este computador acessa (nada da rede local).
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build: .
+    container_name: laivy-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DB_URL=jdbc:mysql://mysql:3306/${DB_NAME:-sistema_esportivo}?useSSL=false&serverTimezone=America/Sao_Paulo&allowPublicKeyRetrieval=true
+      # Sem DB_APP_USER/DB_APP_PASSWORD no .env, usa root (provisório);
+      # depois de rodar scripts/rotacionar-segredos.py passa a usar o usuário "laivy".
+      - DB_USERNAME=${DB_APP_USER:-root}
+      - DB_PASSWORD=${DB_APP_PASSWORD:-${DB_PASSWORD}}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-28800000}
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/laivy-assistente
+      - N8N_TOKEN=${N8N_TOKEN}
+      # E-mail das credenciais dos atletas cadastrados pela IA. Sem SMTP_HOST
+      # no .env, vai pro Mailpit (http://localhost:8025) e nada sai de verdade.
+      - SMTP_HOST=${SMTP_HOST:-mailpit}
+      - SMTP_PORT=${SMTP_PORT:-1025}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_AUTH=${SMTP_AUTH:-false}
+      - SMTP_STARTTLS=${SMTP_STARTTLS:-false}
+      - MAIL_FROM=${MAIL_FROM:-laivy@localhost}
+      - APP_URL=${APP_URL:-http://localhost:8080}
+    ports:
+      # só esta máquina acessa (em HTTP); para servidor use docker-compose.prod.yml (HTTPS)
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n:2.23.2
+    container_name: laivy-n8n
+    depends_on:
+      - qdrant
+    environment:
+      # (basic auth foi removido no n8n 1.0: o editor é protegido pela conta
+      # de dono criada no primeiro acesso, e a porta só abre para esta máquina)
+      - WEBHOOK_URL=http://localhost:5678
+      # O workflow confere o X-Token do backend e as tools mandam
+      # X-Token={{ $env.N8N_TOKEN }} de volta (n8n/workflows/laivy-chat.json);
+      # o n8n 2.x bloqueia $env nos nós por padrão.
+      - N8N_TOKEN=${N8N_TOKEN}
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+    ports:
+      - "127.0.0.1:5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.18.1
+    container_name: laivy-qdrant
+    ports:
+      - "127.0.0.1:6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.20
+    container_name: laivy-mailpit
+    ports:
+      - "127.0.0.1:8025:8025"   # caixa de entrada de teste
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  # Volume do n8n original (laivyIA/docker-compose.yml): é o que tem as
+  # credenciais "OpenAI account" e "Qdrant account" que o workflow usa.
+  n8n_data:
+    external: true
+    name: laivyia_n8n_data
+  qdrant_data:
