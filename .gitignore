@@ -1,22 +1,29 @@
+# Segredos e configuracoes locais
+.env
+.env.*
+!.env.example
+!.env.prod.example
+CREDENCIAIS_LOCAIS.txt
+
+# Logs
+*.log
+
+# Java / Maven
 target/
 *.class
 *.jar
 *.war
-.DS_Store
 .settings/
 .classpath
 .project
-*.log
-laivyIA
-# application.properties vai para o git (só lê variáveis de ambiente, sem segredos)
-.env
-.env.prod
-.env.bak
-CREDENCIAIS_LOCAIS.txt
 
-# Frontend React: dependências e build (o build sai em src/main/resources/static)
+# Frontend: dependencias e build
 frontend/node_modules/
 src/main/resources/static/
 
-# backups do servidor (scripts/backup.sh)
+# Backups
 backups/
+
+# Arquivos locais
+.DS_Store
+laivyIA
