@@ -50,6 +50,11 @@ function PerfilAtleta() {
             return
         }
 
+        if (sessao.primeiro_login === 1) {
+            navigate('/trocar-senha', { replace: true })
+            return
+        }
+
         const ehAtleta = Number(sessao.tipo_usuario) === 3
         const estaAcessandoOutroPerfil = String(sessao.id_usuario) !== String(id)
 
@@ -77,7 +82,7 @@ function PerfilAtleta() {
                     <h1>Não foi possível abrir o perfil</h1>
                     <p>{erro || 'Atleta não encontrado.'}</p>
                     <p className="atleta-ajuda">
-                        Confira se a API está ativa e se VITE_API_URL aponta para o endereço correto.
+                        Verifique se o backend e o banco de dados estao ativos e tente entrar novamente.
                     </p>
                 </section>
             </main>

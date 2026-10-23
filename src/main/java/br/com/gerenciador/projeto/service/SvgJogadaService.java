@@ -63,7 +63,8 @@ public class SvgJogadaService {
             arquivo = new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
         this.defs      = recortar(arquivo, "<defs>", "</defs>");
-        this.geometria = recortar(arquivo, "<g id=\"quadra-geometria\"", "</g>\n</svg>");
+        // Não dependa do tipo de quebra de linha do SVG (LF ou CRLF).
+        this.geometria = recortar(arquivo, "<g id=\"quadra-geometria\"", "</g>");
         if (defs == null || geometria == null) {
             throw new IllegalStateException(
                 "quadra-fiba.svg não tem a estrutura esperada (<defs> e <g id=\"quadra-geometria\">).");

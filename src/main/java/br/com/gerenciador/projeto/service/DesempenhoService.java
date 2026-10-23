@@ -53,7 +53,8 @@ public class DesempenhoService {
         Usuario alvo = usuarioDAO.findById(id)
             .orElseThrow(() -> new NotFoundException("Usuario nao encontrado."));
         Integer idTimeAlvo = alvo.getTime() != null ? alvo.getTime().getId_time() : null;
-        if (!AuthUtil.ehMembroDoTime(authTipo, authId, idTimeAlvo, usuarioDAO))
+        boolean ehDono = authId != null && authId.equals(id);
+        if (!ehDono && !AuthUtil.ehMembroDoTime(authTipo, authId, idTimeAlvo, usuarioDAO))
             throw new ForbiddenException("Sem permissao para ver desempenhos deste usuario.");
         return desempenhoDAO.buscarPorUsuario(id);
     }

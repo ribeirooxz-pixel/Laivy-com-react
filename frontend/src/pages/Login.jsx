@@ -11,7 +11,7 @@ function Login() {
         const usuario = await entrar()
         if (usuario) {
             localStorage.setItem('usuario', JSON.stringify(usuario.usuario))
-            navigate('/home')
+            navigate(usuario.usuario.primeiro_login === 1 ? '/trocar-senha' : '/home')
         }
     }
     return (
